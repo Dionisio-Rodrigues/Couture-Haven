@@ -1,7 +1,17 @@
+from dotenv import load_dotenv
 import psycopg2
+import os
+
+
+load_dotenv()
 
 #Conexão com a base postgres(PostgreSQL)
-postgres = psycopg2.connect(host = "localhost", user="postgres", password="1234", port="5432")
+postgres = psycopg2.connect(
+    host=os.getenv('POSTGRES_HOST'), 
+    user=os.getenv('POSTGRES_USER'),
+    password=os.getenv('POSTGRES_PASS'),
+    port=os.getenv('POSTGRES_PORT'),
+)
 
 #Comando para abrir cursor para executar operações no db
 runner = postgres.cursor()
