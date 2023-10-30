@@ -3,3 +3,11 @@
 __pycache__
 venv
 env
+.vscode
+*.env
+.env.*
+*.db
+*.dat
+*.bak
+*.dir
+*.sqlite3
