@@ -5,7 +5,7 @@ venv
 env
 .vscode
 *.env
-.env.*
+.env
 *.db
 *.dat
 *.bak
