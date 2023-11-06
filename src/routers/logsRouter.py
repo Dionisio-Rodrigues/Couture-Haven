@@ -1,21 +1,21 @@
 from flask import Flask, request, jsonify
+from __main__ import app
 
-app = Flask(__name__)
 items = []
 
-@app.route('/api/data', methods=['GET'])
-def get_data():
+@app.route('/api/logs', methods=['GET'])
+def get_logs():
     data = {'teste': 'teste'}
     return jsonify(data)
 
-@app.route('/api/data', methods=['POST'])
-def post_data():
+@app.route('/api/logs', methods=['POST'])
+def post_log():
     data = request.get_json()
     response = {"message": "Dados enviados com sucesso"}
     return jsonify(response)
 
-@app.route('/api/data/<int:item_id>', methods=['PUT'])
-def put_data(item_id):
+@app.route('/api/logs/<int:item_id>', methods=['PUT'])
+def put_log(item_id):
     data = request.get_json()
     if item_id < len(items):
         items[item_id] = data
@@ -24,8 +24,8 @@ def put_data(item_id):
         response = {"error": "Item não encontrado"}
     return jsonify(response)
 
-@app.route('/api/data/<int:item_id>', methods=['DELETE'])
-def delete_data(item_id):
+@app.route('/api/logs/<int:item_id>', methods=['DELETE'])
+def delete_log(item_id):
     for item in items:
         if item['id'] == item_id:
             items.remove(item)
