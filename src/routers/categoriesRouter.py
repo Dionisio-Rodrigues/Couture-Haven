@@ -12,25 +12,25 @@ def get_categories():
 @app.route('/api/categories', methods=['POST'])
 def post_category():
     data = request.get_json()
-    response = {"message": "Dados enviados com sucesso"}
+    response = {"message": "Dados enviados com sucesso."}
     return jsonify(response)
 
-@app.route('/api/categories/<int:item_id>', methods=['PUT'])
+@app.route('/api/categories/<int:cat_id>', methods=['PUT'])
 def put_category(item_id):
     data = request.get_json()
     if item_id < len(items):
         items[item_id] = data
-        response = {"message": "Item atualizado com sucesso"}
+        response = {"message": "Categoria atualizada com sucesso."}
     else:
-        response = {"error": "Item não encontrado"}
+        response = {"error": "Categoria não encontrada."}
     return jsonify(response)
 
-@app.route('/api/categories/<int:item_id>', methods=['DELETE'])
+@app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 def delete_category(item_id):
     for item in items:
         if item['id'] == item_id:
             items.remove(item)
-            response = {"message": "Item excluído com sucesso"}
+            response = {"message": "Categoria excluída com sucesso."}
             return jsonify(response)
-    response = {"error": "Item não encontrado"}
+    response = {"error": "Categoria não encontrada."}
     return jsonify(response)
