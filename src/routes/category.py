@@ -1,19 +1,22 @@
-from flask import Flask, request, jsonify
-from __main__ import app
+from flask import request, jsonify
 
+from src.app import app
 
 items = []
+
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
     data = {'teste': 'teste'}
     return jsonify(data)
 
+
 @app.route('/api/categories', methods=['POST'])
 def post_category():
     data = request.get_json()
     response = {"message": "Dados enviados com sucesso."}
     return jsonify(response)
+
 
 @app.route('/api/categories/<int:cat_id>', methods=['PUT'])
 def put_category(item_id):
@@ -24,6 +27,7 @@ def put_category(item_id):
     else:
         response = {"error": "Categoria não encontrada."}
     return jsonify(response)
+
 
 @app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 def delete_category(item_id):
