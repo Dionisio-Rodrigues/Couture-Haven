@@ -4,8 +4,7 @@ from __main__ import app
 items = []
 
 @app.route('/api/logs', methods=['GET'])
-def get_logs():
-    data = {'teste': 'teste'}
+def get_logs(data):
     return jsonify(data)
 
 @app.route('/api/logs', methods=['POST'])

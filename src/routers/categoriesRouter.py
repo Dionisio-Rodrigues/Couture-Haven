@@ -5,8 +5,7 @@ from __main__ import app
 items = []
 
 @app.route('/api/categories', methods=['GET'])
-def get_categories():
-    data = {'teste': 'teste'}
+def get_categories(data):
     return jsonify(data)
 
 @app.route('/api/categories', methods=['POST'])

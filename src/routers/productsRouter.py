@@ -1,11 +1,9 @@
 from flask import Flask, request, jsonify
 from __main__ import app
 
-items = []
 
 @app.route('/api/products', methods=['GET'])
-def get_products():
-    data = {'teste': 'teste'}
+def get_products(data):
     return jsonify(data)
 
 @app.route('/api/products', methods=['POST'])
