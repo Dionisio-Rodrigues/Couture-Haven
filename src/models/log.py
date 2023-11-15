@@ -1,7 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-db = SQLAlchemy()
+from src.app import db
 
 
 class Log(db.Model):
@@ -11,3 +10,6 @@ class Log(db.Model):
 
     def __repr__(self):
         return f"Log: {self.message} - {self.timestamp}"
+
+    def to_dict(self):
+        return {"id": self.id, "message": self.message, "timestamp": self.timestamp}

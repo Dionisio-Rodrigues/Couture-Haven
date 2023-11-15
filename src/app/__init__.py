@@ -7,6 +7,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dev.db"
 
 db = SQLAlchemy(app)
 
-from src.routes import category_blueprint
+from src.routes import category_blueprint, log_blueprint
 
 app.register_blueprint(blueprint=category_blueprint, url_prefix="/category")
+app.register_blueprint(blueprint=log_blueprint, url_prefix="/log")
