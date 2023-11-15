@@ -1,40 +1,74 @@
-from flask import request, jsonify
+from flask import request
 
-from src.app import app
-
-items = []
-
-
-@app.route('/api/categories', methods=['GET'])
-def get_categories():
-    data = {'teste': 'teste'}
-    return jsonify(data)
+from src.services import category as category_service
+from src.routes import category_blueprint
 
 
-@app.route('/api/categories', methods=['POST'])
-def post_category():
-    data = request.get_json()
-    response = {"message": "Dados enviados com sucesso."}
-    return jsonify(response)
+@category_blueprint.route(rule="/", methods=["GET"])
+def index():
+    found_categories = [result.to_dict() for result in category_service.get_all()]
+
+    return {"message": "Categories found successfully.", "categories": found_categories}, 200
 
 
-@app.route('/api/categories/<int:cat_id>', methods=['PUT'])
-def put_category(item_id):
-    data = request.get_json()
-    if item_id < len(items):
-        items[item_id] = data
-        response = {"message": "Categoria atualizada com sucesso."}
-    else:
-        response = {"error": "Categoria não encontrada."}
-    return jsonify(response)
+@category_blueprint.route(rule="/<id>", methods=["GET"])
+def view(id):
+    found_category = category_service.get_by_id(id=id)
+
+    if not found_category:
+        return {"message": f"Category with ID '{id}' not found."}, 404
+
+    found_category = found_category.to_dict()
+
+    return {"message": "Category found successfully.", "category": found_category}, 200
 
 
-@app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
-def delete_category(item_id):
-    for item in items:
-        if item['id'] == item_id:
-            items.remove(item)
-            response = {"message": "Categoria excluída com sucesso."}
-            return jsonify(response)
-    response = {"error": "Categoria não encontrada."}
-    return jsonify(response)
+@category_blueprint.route(rule="/", methods=["POST"])
+def create():
+    body = request.get_json()
+
+    if "name" not in body.keys():
+        return {"error": "Invalid payload", "message": "Please provide the required category fields."}, 400
+
+    name = body["name"]
+
+    if category_service.get_by_name(name=name):
+        return {"error": "Category already exists", "message": "A category with provided name already exists."}, 409
+
+    new_category = category_service.create(name=name).to_dict()
+
+    return {"message": "Category created successfully.", "category": new_category}, 201
+
+
+@category_blueprint.route(rule="/<id>", methods=["PUT", "PATCH"])
+def update(id):
+    body = request.get_json()
+
+    if "name" not in body.keys():
+        return {"error": "Invalid payload", "message": "Please provide the required category fields."}, 400
+
+    found_category = category_service.get_by_id(id=id)
+
+    if not found_category:
+        return {"message": f"Category with ID '{id}' not found."}, 404
+
+    name = body["name"]
+
+    if category_service.get_by_name(name=name, exception_id=id):
+        return {"error": "Category already exists", "message": "A category with provided name already exists."}, 409
+
+    found_category = category_service.update(category=found_category, name=name).to_dict()
+
+    return {"message": "Category updated successfully.", "category": found_category}, 200
+
+
+@category_blueprint.route(rule="/<id>", methods=["DELETE"])
+def destroy(id):
+    found_category = category_service.get_by_id(id=id)
+
+    if not found_category:
+        return {"message": f"Category with ID '{id}' not found."}, 404
+
+    category_service.delete(category=found_category)
+
+    return {}, 204
