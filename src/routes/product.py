@@ -1,18 +1,21 @@
-from flask import Flask, request, jsonify
-from __main__ import app
+from flask import request, jsonify
+from src.app import app
 
 items = []
+
 
 @app.route('/api/products', methods=['GET'])
 def get_products():
     data = {'teste': 'teste'}
     return jsonify(data)
 
+
 @app.route('/api/products', methods=['POST'])
 def post_product():
     data = request.get_json()
     response = {"message": "Dados enviados com sucesso."}
     return jsonify(response)
+
 
 @app.route('/api/products/<int:prod_id>', methods=['PUT'])
 def put_product(item_id):
@@ -23,6 +26,7 @@ def put_product(item_id):
     else:
         response = {"error": "Produto não encontrado."}
     return jsonify(response)
+
 
 @app.route('/api/products/<int:prod_id>', methods=['DELETE'])
 def delete_product(item_id):
