@@ -1,39 +1,70 @@
-from flask import request, jsonify
-from src.app import app
+from flask import request
 
-items = []
-
-
-@app.route('/api/products', methods=['GET'])
-def get_products():
-    data = {'teste': 'teste'}
-    return jsonify(data)
+from src.models.product import Product
+from src.services import product as product_service
+from src.routes import product_blueprint
 
 
-@app.route('/api/products', methods=['POST'])
-def post_product():
-    data = request.get_json()
-    response = {"message": "Dados enviados com sucesso."}
-    return jsonify(response)
+@product_blueprint.route(rule="/", methods=["GET"])
+def index():
+    found_products = [result.to_dict() for result in product_service.get_all()]
+
+    return {"message": "Products found successfully.", "products": found_products}, 200
 
 
-@app.route('/api/products/<int:prod_id>', methods=['PUT'])
-def put_product(item_id):
-    data = request.get_json()
-    if item_id < len(items):
-        items[item_id] = data
-        response = {"message": "Produto atualizado com sucesso."}
-    else:
-        response = {"error": "Produto não encontrado."}
-    return jsonify(response)
+@product_blueprint.route(rule="/<id>", methods=["GET"])
+def view(id):
+    found_product = product_service.get_by_id(id=id)
+
+    if not found_product:
+        return {"message": f"Product with ID '{id}' not found."}, 404
+
+    found_product = found_product.to_dict()
+
+    return {"message": "Product found successfully.", "product": found_product}, 200
 
 
-@app.route('/api/products/<int:prod_id>', methods=['DELETE'])
-def delete_product(item_id):
-    for item in items:
-        if item['id'] == item_id:
-            items.remove(item)
-            response = {"message": "Produto excluído com sucesso."}
-            return jsonify(response)
-    response = {"error": "Produto não encontrado."}
-    return jsonify(response)
+@product_blueprint.route(rule="/", methods=["POST"])
+def create():
+    body = request.get_json()
+
+    if "name" not in body.keys():
+        return {"error": "Invalid payload", "message": "Please provide the required product fields."}, 400
+
+    try:
+        new_product = product_service.save(Product(**body))
+    except Exception as e:
+        return {"message": str(e)}, 400
+
+    return {"message": "Product created successfully.", "product": new_product.to_dict()}, 201
+
+
+@product_blueprint.route(rule="/<id>", methods=["PUT", "PATCH"])
+def update(id):
+    body = request.get_json()
+
+    found_product = product_service.get_by_id(id=id)
+
+    if not found_product:
+        return {"message": f"Product with ID '{id}' not found."}, 404
+
+    [setattr(found_product, key, value) for key, value in body.items() if key != "id"]
+
+    try:
+        found_product = product_service.save(found_product)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
+    return {"message": "Product updated successfully.", "product": found_product.to_dict()}, 200
+
+
+@product_blueprint.route(rule="/<id>", methods=["DELETE"])
+def destroy(id):
+    found_product = product_service.get_by_id(id=id)
+
+    if not found_product:
+        return {"message": f"Product with ID '{id}' not found."}, 404
+
+    product_service.delete(product=found_product)
+
+    return {}, 204
