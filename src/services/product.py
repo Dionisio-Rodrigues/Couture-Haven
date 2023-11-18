@@ -1,40 +1,17 @@
 from src.app import db
 from src.models.product import Product
+from src.models.dao import BaseDAO
 
+base_dao = BaseDAO(Product)
 
-def get_all():
-    return Product.query.all()
+get_all_products = lambda : base_dao.get_all()
 
+get_products_by_id = lambda id : base_dao.get_by({"id": id}).first()
 
-def get_by_id(id):
-    return Product.query.filter_by(id=id).first()
+get_products_by_name = lambda name, exception_id=None : base_dao.get_by({"name": name}, exception_id)
 
+get_products_by_category = lambda category_id, exception_id=None : base_dao.get_by({"category_id": category_id}, exception_id)
 
-def get_by_name(name, exception_id=None):
-    if exception_id:
-        return Product.query.filter(Product.id != exception_id).filter_by(name=name).first()
+save_product = lambda product : base_dao.save(product) or product if not (base_dao.get_by({"name": product.name}, exception_id=product.id) and base_dao.get_by({"name": product.name}, exception_id=product.id).first()) else None
 
-    return Product.query.filter_by(name=name).first()
-
-
-def get_by_category(category_id, exception_id=None):
-    if exception_id:
-        return Product.query.filter(Product.id != exception_id).filter_by(category_id=category_id).first()
-
-    return Product.query.filter_by(category_id=category_id).first()
-
-
-def save(product):
-
-    if get_by_name(name=product.name, exception_id=product.id):
-        raise Exception('It was not possible to save because the name already existed.')
-
-    db.session.add(product)
-    db.session.commit()
-
-    return product
-
-
-def delete(product):
-    db.session.delete(product)
-    db.session.commit()
+delete_product = lambda product : base_dao.delete(product)
