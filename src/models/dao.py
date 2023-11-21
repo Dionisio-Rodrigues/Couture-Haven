@@ -1,6 +1,7 @@
 from src.app import db
 from src.models.log import Log
 
+
 class BaseDAO():
     def __init__(self, model):
         self.db = db
