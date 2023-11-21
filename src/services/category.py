@@ -5,7 +5,7 @@ base_dao = BaseDAO(Category)
 
 get_all_categories = lambda: base_dao.get_all()
 
-get_category_by_id = lambda id: base_dao.get_by(filter={"id": id}).first()
+get_category_by_id = lambda id: base_dao.get_by(filter={"id": id})
 
 get_category_by_name = lambda name, exception_id=None: base_dao.get_by(filter={"name": name}, exception_id=exception_id)
 

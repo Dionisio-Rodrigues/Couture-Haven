@@ -5,7 +5,7 @@ base_dao = BaseDAO(Product)
 
 get_all_products = lambda: base_dao.get_all()
 
-get_products_by_id = lambda id: base_dao.get_by(filter={"id": id}).first()
+get_products_by_id = lambda id: base_dao.get_by(filter={"id": id})
 
 get_products_by_name = lambda name, exception_id=None: base_dao.get_by(filter={"name": name}, exception_id=exception_id)
 
