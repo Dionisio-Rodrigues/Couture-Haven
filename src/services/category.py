@@ -1,40 +1,16 @@
 from src.app import db
 from src.models.category import Category
+from src.models.dao import BaseDAO
 
+base_dao = BaseDAO(Category)
 
-def get_all():
-    return Category.query.all()
+get_all_categories = lambda: base_dao.get_all()
 
+get_category_by_id = lambda id: base_dao.get_by({"id": id}).first()
 
-def get_by_id(id):
-    return Category.query.filter_by(id=id).first()
+get_category_by_name = lambda name, exception_id=None: base_dao.get_by({"name": name}, exception_id)
 
+save_category = lambda category: base_dao.save(category) or category if not (base_dao.get_by({"name": category.name}, exception_id=category.id) and base_dao.get_by({"name": category.name}, exception_id=category.id).first()) else None
 
-def get_by_name(name, exception_id=None):
-    if exception_id:
-        return Category.query.filter(Category.id != exception_id).filter_by(name=name).first()
+delete_category = lambda category: base_dao.delete(category)
 
-    return Category.query.filter_by(name=name).first()
-
-
-def create(name):
-    new_category = Category(name=name)
-
-    db.session.add(new_category)
-    db.session.commit()
-
-    return new_category
-
-
-def update(category, name):
-    category.name = name
-
-    db.session.add(category)
-    db.session.commit()
-
-    return category
-
-
-def delete(category):
-    db.session.delete(category)
-    db.session.commit()
