@@ -8,8 +8,5 @@ class Log(db.Model):
     message = db.Column(db.String(255))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
-        return f"Log: {self.message} - {self.timestamp}"
-
-    def to_dict(self):
-        return {"id": self.id, "message": self.message, "timestamp": self.timestamp}
+    __repr__ = lambda self: f"Log: '{self.message}'"
+    to_dict = lambda self: {"id": self.id, "message": self.message, "timestamp": self.timestamp}

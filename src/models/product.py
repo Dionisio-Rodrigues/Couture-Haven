@@ -1,4 +1,5 @@
 from src.app import db
+from src.utlities.general import format_currency
 
 
 class Product(db.Model):
@@ -8,5 +9,5 @@ class Product(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey("category.id"))
     category = db.relationship("Category", uselist=False, backref="product")
 
-    def to_dict(self):
-        return {"id": self.id, "name":self.name, "price": self.price, "category_id": self.category_id}
+    __repr__ = lambda self: f"Product: '{self.name}' - R$ {format_currency(self.price)}"
+    to_dict = lambda self: {"id": self.id, "name": self.name, "price": self.price, "category_id": self.category_id}

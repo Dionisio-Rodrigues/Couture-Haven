@@ -1,7 +1,9 @@
 from flask import Blueprint
 
-category_blueprint = Blueprint(name="category", import_name=__name__)
-product_blueprint = Blueprint(name="product", import_name=__name__)
-log_blueprint = Blueprint(name="log", import_name=__name__)
+create_blueprint = lambda name: Blueprint(name=name, import_name=__name__)
+
+category_blueprint = create_blueprint(name="category")
+product_blueprint = create_blueprint(name="product")
+log_blueprint = create_blueprint(name="log")
 
 from src.routes import category, product, log
