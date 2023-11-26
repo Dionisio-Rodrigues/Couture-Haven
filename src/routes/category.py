@@ -1,5 +1,4 @@
 from flask import request
-
 from src.services.category import (
     get_all_categories,
     get_category_by_id,
@@ -9,74 +8,72 @@ from src.services.category import (
 )
 from src.models.category import Category
 from src.routes import category_blueprint
+from src.utilities.general import models_to_dict
 
+contains_name_response = lambda body: (
+    None
+    if "name" in body.keys()
+    else ({"error": "Invalid payload", "message": "Please provide the required category fields."}, 400)
+)
+category_name_exists_response = lambda name, exception_id=None: (
+    ({"error": "Category already exists", "message": "A category with provided name already exists."}, 409)
+    if get_category_by_name(name=name, exception_id=exception_id)
+    else None
+)
+category_id_not_exists_response = lambda id: (
+    ({"message": f"Category with ID '{id}' not found."}, 404)
+    if not get_category_by_id(id=id)
+    else None
+)
 
-@category_blueprint.route(rule="/", methods=["GET"])
-def index():
-    found_categories = [result.to_dict() for result in get_all_categories()]
+# Index
+index = lambda: ({"message": "Categories found successfully.", "categories": models_to_dict(get_all_categories())}, 200)
 
-    return {"message": "Categories found successfully.", "categories": found_categories}, 200
+# View
+view_response = lambda id, category: (
+    ({"message": "Category found successfully.", "category": category.to_dict()}, 200)
+    if category
+    else ({"message": f"Category with ID '{id}' not found."}, 404)
+)
+view = lambda id: view_response(id, get_category_by_id(id=id))
 
+# Create
+create_response = lambda body: (
+        contains_name_response(body) or
+        category_name_exists_response(body["name"]) or
+        (
+            {
+                "message": "Category created successfully.",
+                "category": save_category(category=Category(name=body["name"])).to_dict()
+            }, 201
+        )
+)
+create = lambda: create_response(request.get_json())
 
-@category_blueprint.route(rule="/<id>", methods=["GET"])
-def view(id):
-    found_category = get_category_by_id(id=id)
+# Update
+update_response = lambda id, body, category: (
+        category_id_not_exists_response(id) or
+        category_name_exists_response(body["name"], id) or
+        category.set_name(body["name"]) or
+        (
+            {
+                "message": "Category updated successfully.",
+                "category": save_category(category).to_dict()
+            }, 200
+        )
+)
+update_flow = lambda id, body: contains_name_response(body) or update_response(id, body, get_category_by_id(id=id))
+update = lambda id: update_flow(id, request.get_json())
 
-    if not found_category:
-        return {"message": f"Category with ID '{id}' not found."}, 404
+# Destroy
+destroy_response = lambda id, category: (
+        category_id_not_exists_response(id) or
+        (delete_category(category=category), ({}, 204))[1]
+)
+destroy = lambda id: destroy_response(id, get_category_by_id(id=id))
 
-    found_category = found_category.to_dict()
-
-    return {"message": "Category found successfully.", "category": found_category}, 200
-
-
-@category_blueprint.route(rule="/", methods=["POST"])
-def create():
-    body = request.get_json()
-
-    if "name" not in body.keys():
-        return {"error": "Invalid payload", "message": "Please provide the required category fields."}, 400
-
-    name = body["name"]
-
-    if get_category_by_name(name=name):
-        return {"error": "Category already exists", "message": "A category with provided name already exists."}, 409
-
-    new_category = save_category(category=Category(name=name)).to_dict()
-
-    return {"message": "Category created successfully.", "category": new_category}, 201
-
-
-@category_blueprint.route(rule="/<id>", methods=["PUT", "PATCH"])
-def update(id):
-    body = request.get_json()
-
-    if "name" not in body.keys():
-        return {"error": "Invalid payload", "message": "Please provide the required category fields."}, 400
-
-    found_category = get_category_by_id(id=id)
-
-    if not found_category:
-        return {"message": f"Category with ID '{id}' not found."}, 404
-
-    name = body["name"]
-
-    if get_category_by_name(name=name, exception_id=id):
-        return {"error": "Category already exists", "message": "A category with provided name already exists."}, 409
-
-    found_category.name = name
-    found_category = save_category(category=found_category).to_dict()
-
-    return {"message": "Category updated successfully.", "category": found_category}, 200
-
-
-@category_blueprint.route(rule="/<id>", methods=["DELETE"])
-def destroy(id):
-    found_category = get_category_by_id(id=id)
-
-    if not found_category:
-        return {"message": f"Category with ID '{id}' not found."}, 404
-
-    delete_category(category=found_category)
-
-    return {}, 204
+category_blueprint.add_url_rule(rule="/", endpoint="index", view_func=index, methods=["GET"])
+category_blueprint.add_url_rule(rule="/<int:id>", endpoint="view", view_func=view, methods=["GET"])
+category_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
+category_blueprint.add_url_rule(rule="/<id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
+category_blueprint.add_url_rule(rule="/<id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])

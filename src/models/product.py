@@ -1,5 +1,5 @@
 from src.app import db
-from src.utlities.general import format_currency
+from src.utilities.general import format_currency
 
 
 class Product(db.Model):

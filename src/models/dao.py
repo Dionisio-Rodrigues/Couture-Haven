@@ -1,6 +1,6 @@
 from src.app import db
 from src.models.log import Log
-from src.utlities.database import format_conditions
+from src.utilities.database import format_conditions
 
 
 class BaseDAO:

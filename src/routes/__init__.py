@@ -1,6 +1,4 @@
-from flask import Blueprint
-
-create_blueprint = lambda name: Blueprint(name=name, import_name=__name__)
+from src.utilities.flask import create_blueprint
 
 category_blueprint = create_blueprint(name="category")
 product_blueprint = create_blueprint(name="product")
