@@ -10,6 +10,7 @@ from src.models.category import Category
 from src.routes import category_blueprint
 from src.utilities.general import models_to_dict
 
+# Validations
 contains_name_response = lambda body: (
     None
     if "name" in body.keys()
@@ -52,6 +53,7 @@ create = lambda: create_response(request.get_json())
 
 # Update
 update_response = lambda id, body, category: (
+        contains_name_response(body) or
         category_id_not_exists_response(id) or
         category_name_exists_response(body["name"], id) or
         category.set_name(body["name"]) or
@@ -62,8 +64,7 @@ update_response = lambda id, body, category: (
             }, 200
         )
 )
-update_flow = lambda id, body: contains_name_response(body) or update_response(id, body, get_category_by_id(id=id))
-update = lambda id: update_flow(id, request.get_json())
+update = lambda id: update_response(id, request.get_json(), get_category_by_id(id=id))
 
 # Destroy
 destroy_response = lambda id, category: (
