@@ -19,18 +19,25 @@ user_not_exists = lambda username, user: (
     if user
     else ({"message": f"User with username '{username}' not found."}, 404)
 )
-check_password = lambda user, authorization: (
-    ({
-        "message": "User authenticated successfully.",
-        "token": jwt.encode({"username": user.username, "exp": datetime.now() + timedelta(hours=12)}, SECRET_KEY),
-    })
-    if check_password_hash(user.password, authorization.password)
-    else None
+check_password = (
+    lambda authorization: (
+        lambda username: (
+            lambda password: (
+                {
+                    "message": "User authenticated successfully.",
+                    "token": jwt.encode(
+                        {"username": username, "exp": datetime.now() + timedelta(hours=12)}, SECRET_KEY
+                    ),
+                }
+                if check_password_hash(password, authorization["password"])
+                else unauthorized_response()
+            )
+        )
+    )
 )
 user_flow = lambda username, user, authorization: (
         user_not_exists(username, user) or
-        check_password(user, authorization) or
-        unauthorized_response()
+        check_password(authorization)(user.username)(user.password)
 )
 auth_flow = lambda authorization: (
         verify_auth(authorization) or
