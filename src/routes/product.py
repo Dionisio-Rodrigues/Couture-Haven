@@ -10,6 +10,7 @@ from src.services.product import (
 from src.routes import product_blueprint
 from src.utilities.general import models_to_dict
 from src.utilities.flask import maybe_bind_id
+from src.utilities.auth import token_required
 
 # Validations
 contains_name_response = lambda body: (
@@ -72,8 +73,33 @@ destroy_response = lambda id: (
 )
 destroy = lambda id: maybe_bind_id(id, destroy_response)
 
-product_blueprint.add_url_rule(rule="/", endpoint="index", view_func=index, methods=["GET"])
-product_blueprint.add_url_rule(rule="/<int:id>", endpoint="view", view_func=view, methods=["GET"])
-product_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
-product_blueprint.add_url_rule(rule="/<int:id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
-product_blueprint.add_url_rule(rule="/<int:id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])
+product_blueprint.add_url_rule(
+    rule="/",
+    endpoint="index",
+    view_func=token_required(index),
+    methods=["GET"],
+)
+product_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="view",
+    view_func=token_required(view),
+    methods=["GET"],
+)
+product_blueprint.add_url_rule(
+    rule="/",
+    endpoint="create",
+    view_func=token_required(create),
+    methods=["POST"],
+)
+product_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="update",
+    view_func=token_required(update),
+    methods=["PUT", "PATCH"],
+)
+product_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="destroy",
+    view_func=token_required(destroy),
+    methods=["DELETE"],
+)

@@ -5,6 +5,7 @@ from src.routes import log_blueprint
 from src.services.log import get_all_logs, get_log_by_id, save_log, delete_log
 from src.utilities.general import models_to_dict
 from src.utilities.flask import maybe_bind_id
+from src.utilities.auth import token_required
 
 # Validations
 contains_message_response = lambda body: (
@@ -52,8 +53,33 @@ update = lambda id: maybe_bind_id(id, update_flow)
 destroy_response = lambda id: log_id_not_exists_response(id) or (delete_log(log=get_log_by_id(id=id)), ({}, 204))[1]
 destroy = lambda id: maybe_bind_id(id, destroy_response)
 
-log_blueprint.add_url_rule(rule="/", endpoint="index", view_func=index, methods=["GET"])
-log_blueprint.add_url_rule(rule="/<int:id>", endpoint="view", view_func=view, methods=["GET"])
-log_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
-log_blueprint.add_url_rule(rule="/<int:id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
-log_blueprint.add_url_rule(rule="/<int:id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])
+log_blueprint.add_url_rule(
+    rule="/",
+    endpoint="index",
+    view_func=token_required(index),
+    methods=["GET"],
+)
+log_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="view",
+    view_func=token_required(view),
+    methods=["GET"],
+)
+log_blueprint.add_url_rule(
+    rule="/",
+    endpoint="create",
+    view_func=token_required(create),
+    methods=["POST"],
+)
+log_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="update",
+    view_func=token_required(update),
+    methods=["PUT", "PATCH"],
+)
+log_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="destroy",
+    view_func=token_required(destroy),
+    methods=["DELETE"],
+)

@@ -11,6 +11,7 @@ from src.models.category import Category
 from src.routes import category_blueprint
 from src.utilities.general import models_to_dict
 from src.utilities.flask import maybe_bind_id
+from src.utilities.auth import token_required
 
 # Validations
 contains_name_response = lambda body: (
@@ -77,8 +78,33 @@ destroy_response = lambda id: (
 )
 destroy = lambda id: maybe_bind_id(id, destroy_response)
 
-category_blueprint.add_url_rule(rule="/", endpoint="index", view_func=index, methods=["GET"])
-category_blueprint.add_url_rule(rule="/<int:id>", endpoint="view", view_func=view, methods=["GET"])
-category_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
-category_blueprint.add_url_rule(rule="/<int:id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
-category_blueprint.add_url_rule(rule="/<int:id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])
+category_blueprint.add_url_rule(
+    rule="/",
+    endpoint="index",
+    view_func=token_required(index),
+    methods=["GET"],
+)
+category_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="view",
+    view_func=token_required(view),
+    methods=["GET"],
+)
+category_blueprint.add_url_rule(
+    rule="/",
+    endpoint="create",
+    view_func=token_required(create),
+    methods=["POST"],
+)
+category_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="update",
+    view_func=token_required(update),
+    methods=["PUT", "PATCH"],
+)
+category_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="destroy",
+    view_func=token_required(destroy),
+    methods=["DELETE"],
+)
