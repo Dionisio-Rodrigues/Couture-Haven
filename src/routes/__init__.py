@@ -1,9 +1,9 @@
-from flask import Blueprint
+from src.utilities.flask import create_blueprint
 
-create_blueprint = lambda name: Blueprint(name=name, import_name=__name__)
-
+user_blueprint = create_blueprint(name="user")
+auth_blueprint = create_blueprint(name="auth")
 category_blueprint = create_blueprint(name="category")
 product_blueprint = create_blueprint(name="product")
 log_blueprint = create_blueprint(name="log")
 
-from src.routes import category, product, log
+from src.routes import user, auth, category, product, log

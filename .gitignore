@@ -1,12 +1,11 @@
+__pycache__
 .env
 .idea
-__pycache__
-venv
-env
 .vscode
-*.env
-.env
+env
+venv
 *.db
+*.env
 *.dat
 *.bak
 *.dir

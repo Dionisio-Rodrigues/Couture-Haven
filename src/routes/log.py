@@ -3,67 +3,83 @@ from flask import request
 from src.models.log import Log
 from src.routes import log_blueprint
 from src.services.log import get_all_logs, get_log_by_id, save_log, delete_log
+from src.utilities.general import models_to_dict
+from src.utilities.flask import maybe_bind_id
+from src.utilities.auth import token_required
 
+# Validations
+contains_message_response = lambda body: (
+    None
+    if "message" in body.keys()
+    else ({"error": "Invalid payload", "message": "Please provide the required log fields."}, 400)
+)
 
-@log_blueprint.route(rule="/", methods=["GET"])
-def index():
-    found_logs = [result.to_dict() for result in get_all_logs()]
+log_id_not_exists_response = lambda id: (
+    ({"message": f"Log with ID '{id}' not found."}, 404)
+    if not get_log_by_id(id=id)
+    else None
+)
 
-    return {"message": "Logs found successfully.", "logs": found_logs}, 200
+# Index
+index = lambda: ({"message": "Logs found successfully.", "logs": models_to_dict(get_all_logs())}, 200)
 
+# View
+view_response = lambda id, log: (
+    ({"message": "Log found successfully.", "log": log.to_dict()}, 200)
+    if log
+    else ({"message": f"Log with ID '{id}' not found."}, 404)
+)
+view_flow = lambda id: view_response(id, get_log_by_id(id=id))
+view = lambda id: maybe_bind_id(id, view_flow)
 
-@log_blueprint.route(rule="/<id>", methods=["GET"])
-def view(id):
-    found_log = get_log_by_id(id=id)
+# Create
+create_response = lambda body: (
+        contains_message_response(body) or
+        ({"message": "Log created successfully.", "log": save_log(Log(message=body["message"])).to_dict()}, 201)
+)
+create = lambda: create_response(request.get_json())
 
-    if not found_log:
-        return {"message": f"Log with ID '{id}' not found."}, 404
+# Update
+update_response = lambda id, body, log: (
+        contains_message_response(body) or
+        log_id_not_exists_response(id) or
+        log.set_message(body["message"]) or
+        ({"message": "Log updated successfully.", "log": save_log(log).to_dict()}, 200)
+)
+update_flow = lambda id: update_response(id, request.get_json(), get_log_by_id(id=id))
+update = lambda id: maybe_bind_id(id, update_flow)
 
-    found_log = found_log.to_dict()
+# Destroy
+destroy_response = lambda id: log_id_not_exists_response(id) or (delete_log(log=get_log_by_id(id=id)), ({}, 204))[1]
+destroy = lambda id: maybe_bind_id(id, destroy_response)
 
-    return {"message": "Log found successfully.", "log": found_log}, 200
-
-
-@log_blueprint.route(rule="/", methods=["POST"])
-def create():
-    body = request.get_json()
-
-    if "message" not in body.keys():
-        return {"error": "Invalid payload", "message": "Please provide the required log fields."}, 400
-
-    message = body["message"]
-
-    new_log = save_log(Log(message=message)).to_dict()
-
-    return {"message": "Log created successfully.", "log": new_log}, 201
-
-
-@log_blueprint.route(rule="/<id>", methods=["PUT", "PATCH"])
-def update(id):
-    body = request.get_json()
-
-    if "message" not in body.keys():
-        return {"error": "Invalid payload", "message": "Please provide the required log fields."}, 400
-
-    found_log = get_log_by_id(id=id)
-
-    if not found_log:
-        return {"message": f"Log with ID '{id}' not found."}, 404
-
-    found_log.message = body["message"]
-
-    found_log = save_log(log=found_log).to_dict()
-
-    return {"message": "Log updated successfully.", "log": found_log}, 200
-
-
-@log_blueprint.route(rule="/<id>", methods=["DELETE"])
-def destroy(id):
-    found_log = get_log_by_id(id=id)
-
-    if not found_log:
-        return {"message": f"Log with ID '{id}' not found."}, 404
-
-    delete_log(log=found_log)
-
-    return {}, 204
+log_blueprint.add_url_rule(
+    rule="/",
+    endpoint="index",
+    view_func=token_required(index),
+    methods=["GET"],
+)
+log_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="view",
+    view_func=token_required(view),
+    methods=["GET"],
+)
+log_blueprint.add_url_rule(
+    rule="/",
+    endpoint="create",
+    view_func=token_required(create),
+    methods=["POST"],
+)
+log_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="update",
+    view_func=token_required(update),
+    methods=["PUT", "PATCH"],
+)
+log_blueprint.add_url_rule(
+    rule="/<int:id>",
+    endpoint="destroy",
+    view_func=token_required(destroy),
+    methods=["DELETE"],
+)
