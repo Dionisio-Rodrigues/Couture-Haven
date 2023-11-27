@@ -16,8 +16,8 @@ get_products_by_category = lambda category_id, exception_id=None: base_dao.get_b
 save_product = lambda product: (
     base_dao.save(instance=product) or product
     if not (
-            base_dao.get_by(conditions={"name": product.name}, exception_id=product.id) and
-            base_dao.get_by(conditions={"name": product.name}, exception_id=product.id).first()
+            base_dao.get_by(conditions={"name": product.name}, exception_id=product.id)
+            # and base_dao.get_by(conditions={"name": product.name}, exception_id=product.id).first()
     )
     else None
 )

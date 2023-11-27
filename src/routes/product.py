@@ -1,3 +1,4 @@
+import re
 from flask import request
 
 from src.models.product import Product
@@ -9,67 +10,27 @@ from src.services.product import (
 )
 from src.routes import product_blueprint
 
-
-@product_blueprint.route(rule="/", methods=["GET"])
-def index():
-    found_products = [result.to_dict() for result in get_all_products()]
-
-    return {"message": "Products found successfully.", "products": found_products}, 200
+cache = dict()
 
 
-@product_blueprint.route(rule="/<id>", methods=["GET"])
-def view(id):
-    found_product = get_products_by_id(id=id)
+is_valid = lambda body, obj_class : all([field in vars(obj_class).keys() for field in body.keys()])
 
-    if not found_product:
-        return {"message": f"Product with ID '{id}' not found."}, 404
+read_bind = lambda id: get_products_by_id(id) if re.match(r"^[1-9][0-9]*$", id) else print('error') or None
+read = lambda id: read_bind(id)
 
-    found_product = found_product.to_dict()
+index = lambda : ({"message": "Products found successfully.", "products": [result.to_dict() for result in get_all_products()]}, 200)
+product_blueprint.add_url_rule(rule="/", endpoint="list_product", view_func=index, methods=["GET"])
 
-    return {"message": "Product found successfully.", "product": found_product}, 200
+view = lambda id: ({"message": "Product found successfully.", "product": read(id).to_dict()}, 200) if read(id) is not None else ({"message": f"Product with ID '{id}' not found."}, 404)
+product_blueprint.add_url_rule(rule="/<id>", endpoint="retrieve_product", view_func=view, methods=["GET"])
 
+create_bind = lambda body: cache.update({"new_product":save_product(Product(**body))}) if is_valid(body, Product) and body.get("name") != None else None
+create = lambda : ({"message": "Product created successfully.", "product": cache.pop("new_product").to_dict()}, 201) if create_bind(request.get_json()) or cache.get("new_product", None) else ({"error": "Invalid payload"}, 400)
+product_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
 
-@product_blueprint.route(rule="/", methods=["POST"])
-def create():
-    body = request.get_json()
+update_bind = lambda id, body: cache.update({'product':read(id)}) or [setattr(cache.get('product'), key, value) for key, value in body.items()] and cache.update({"updated_product":save_product(cache.pop("product"))}) if is_valid(body, Product) else None
+update = lambda id :  ({"message": "Product updated successfully.", "product": cache.pop('updated_product').to_dict()}, 200) if read(id) is not None and (update_bind(id=id, body=request.get_json()) or cache.get("updated_product", None)) else ({"message": f"Product with ID '{id}' not found."}, 404)
+product_blueprint.add_url_rule(rule="/<id>", endpoint="update_product", view_func=update, methods=["PUT", "PATCH"])
 
-    if "name" not in body.keys():
-        return {"error": "Invalid payload", "message": "Please provide the required product fields."}, 400
-
-    try:
-        new_product = save_product(Product(**body))
-    except Exception as e:
-        return {"message": str(e)}, 400
-
-    return {"message": "Product created successfully.", "product": new_product.to_dict()}, 201
-
-
-@product_blueprint.route(rule="/<id>", methods=["PUT", "PATCH"])
-def update(id):
-    body = request.get_json()
-
-    found_product = get_products_by_id(id=id)
-
-    if not found_product:
-        return {"message": f"Product with ID '{id}' not found."}, 404
-
-    [setattr(found_product, key, value) for key, value in body.items() if key != "id"]
-
-    found_product = save_product(found_product)
-
-    if not found_product:
-        return {"message": 'It was not possible to save because the name already existed.'}, 400
-
-    return {"message": "Product updated successfully.", "product": found_product.to_dict()}, 200
-
-
-@product_blueprint.route(rule="/<id>", methods=["DELETE"])
-def destroy(id):
-    found_product = get_products_by_id(id=id)
-
-    if not found_product:
-        return {"message": f"Product with ID '{id}' not found."}, 404
-
-    delete_product(product=found_product)
-
-    return {}, 204
+destroy = lambda id: delete_product(product=read(id)) or ({}, 200) if read(id) is not None else {"message": f"Product with ID '{id}' not found."}, 404
+product_blueprint.add_url_rule(rule="/<id>", endpoint="delete_product", view_func=destroy, methods=["DELETE"])
