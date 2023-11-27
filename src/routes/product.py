@@ -8,6 +8,7 @@ from src.services.product import (
     delete_product,
 )
 from src.routes import product_blueprint
+from src.utilities.general import models_to_dict
 from src.utilities.flask import maybe_bind_id
 
 # Validations
@@ -24,12 +25,7 @@ product_id_not_exists_response = lambda id: (
 )
 
 # Index
-index = lambda: (
-    {
-        "message": "Products found successfully.",
-        "products": [result.to_dict() for result in get_all_products()]
-    }, 200
-)
+index = lambda: ({"message": "Products found successfully.", "products": models_to_dict(get_all_products())}, 200)
 
 # View
 view_response = lambda id, product: (

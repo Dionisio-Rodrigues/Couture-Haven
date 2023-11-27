@@ -3,6 +3,7 @@ from flask import request
 from src.models.log import Log
 from src.routes import log_blueprint
 from src.services.log import get_all_logs, get_log_by_id, save_log, delete_log
+from src.utilities.general import models_to_dict
 from src.utilities.flask import maybe_bind_id
 
 # Validations
@@ -19,7 +20,7 @@ log_id_not_exists_response = lambda id: (
 )
 
 # Index
-index = lambda: ({"message": "Logs found successfully.", "logs": [result.to_dict() for result in get_all_logs()]}, 200)
+index = lambda: ({"message": "Logs found successfully.", "logs": models_to_dict(get_all_logs())}, 200)
 
 # View
 view_response = lambda id, log: (
