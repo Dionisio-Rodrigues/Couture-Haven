@@ -14,7 +14,7 @@ from src.utilities.flask import maybe_bind_id
 from src.utilities.auth import token_required
 
 # Validations
-contains_name_response = lambda body: (
+field_validation_response = lambda body: (
     None
     if "name" in body.keys()
     else ({"error": "Invalid payload", "message": "Please provide the required category fields."}, 400)
@@ -44,7 +44,7 @@ view = lambda id: maybe_bind_id(id, view_flow)
 
 # Create
 create_response = lambda body: (
-        contains_name_response(body) or
+        field_validation_response(body) or
         name_exists_response(body["name"]) or
         (
             {
@@ -57,7 +57,7 @@ create = lambda: create_response(request.get_json())
 
 # Update
 update_response = lambda id, body, category: (
-        contains_name_response(body) or
+        field_validation_response(body) or
         id_not_exists_response(id) or
         name_exists_response(body["name"], id) or
         category.set_name(body["name"]) or

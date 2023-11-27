@@ -16,10 +16,16 @@ username_exists_response = lambda username: (
     if get_user_by_username(username=username)
     else None
 )
+valid_password_response = lambda password: (
+    ({"error": "Weak password", "message": "The password must contain at least 6 characters."}, 400)
+    if len(password) < 6
+    else None
+)
 
 # Create
 create_response = lambda body: (
         contains_username_response(body) or
+        valid_password_response(body["password"]) or
         username_exists_response(body["username"]) or
         (
             {
