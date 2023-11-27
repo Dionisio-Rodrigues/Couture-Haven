@@ -11,3 +11,11 @@ class Product(db.Model):
 
     __repr__ = lambda self: f"Product: '{self.name}' - R$ {format_currency(self.price)}"
     to_dict = lambda self: {"id": self.id, "name": self.name, "price": self.price, "category_id": self.category_id}
+    get_id = lambda self: self.id
+    set_id = lambda self, new_id: setattr(self, "id", new_id)
+    get_name = lambda self: self.name
+    set_name = lambda self, new_name: setattr(self, "name", new_name)
+    get_price = lambda self: self.price
+    set_price = lambda self, new_price: setattr(self, "price", new_price)
+    get_category_id = lambda self: self.category_id
+    set_category_id = lambda self, new_category_id: setattr(self, "category_id", new_category_id)
