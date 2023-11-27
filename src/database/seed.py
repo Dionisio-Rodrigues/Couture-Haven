@@ -18,25 +18,20 @@ PRODUCTS = [
     {"name": "Calça brim preta", "price": 69.99, "category_id": 3},
 ]
 
-
-def seed():
-    print("SEEDING DATABASE...")
-
-    print("INSERTING CATEGORY(IES) INTO DATABASE...")
-    [post(url=f"{BASE_API_URL}/category", json={"name": category["name"]}) for category in CATEGORIES]
-    print(f"[SUCCESS] {len(CATEGORIES)} CATEGORY(IES) INSERTED.")
-
-    print("INSERTING PRODUCT(S) INTO DATABASE...")
+seed = lambda: (
+    print("SEEDING DATABASE..."),
+    print("INSERTING CATEGORY(IES) INTO DATABASE..."),
+    [post(url=f"{BASE_API_URL}/category", json={"name": category["name"]}) for category in CATEGORIES],
+    print(f"[SUCCESS] {len(CATEGORIES)} CATEGORY(IES) INSERTED."),
+    print("INSERTING PRODUCT(S) INTO DATABASE..."),
     [
         post(
             url=f"{BASE_API_URL}/product",
             json={"name": product["name"], "price": product["price"], "category_id": product["category_id"]},
         ) for product in PRODUCTS
-    ]
-    print(f"[SUCCESS] {len(PRODUCTS)} PRODUCT(S) INSERTED.")
-
+    ],
+    print(f"[SUCCESS] {len(PRODUCTS)} PRODUCT(S) INSERTED."),
     print("[SUCCESS] SEED COMPLETE.")
+)
 
-
-if __name__ == "__main__":
-    seed()
+seed()

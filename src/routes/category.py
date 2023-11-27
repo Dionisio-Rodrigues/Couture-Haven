@@ -1,4 +1,5 @@
 from flask import request
+
 from src.services.category import (
     get_all_categories,
     get_category_by_id,
@@ -9,6 +10,7 @@ from src.services.category import (
 from src.models.category import Category
 from src.routes import category_blueprint
 from src.utilities.general import models_to_dict
+from src.utilities.flask import maybe_bind_id
 
 # Validations
 contains_name_response = lambda body: (
@@ -16,12 +18,12 @@ contains_name_response = lambda body: (
     if "name" in body.keys()
     else ({"error": "Invalid payload", "message": "Please provide the required category fields."}, 400)
 )
-category_name_exists_response = lambda name, exception_id=None: (
+name_exists_response = lambda name, exception_id=None: (
     ({"error": "Category already exists", "message": "A category with provided name already exists."}, 409)
     if get_category_by_name(name=name, exception_id=exception_id)
     else None
 )
-category_id_not_exists_response = lambda id: (
+id_not_exists_response = lambda id: (
     ({"message": f"Category with ID '{id}' not found."}, 404)
     if not get_category_by_id(id=id)
     else None
@@ -36,12 +38,13 @@ view_response = lambda id, category: (
     if category
     else ({"message": f"Category with ID '{id}' not found."}, 404)
 )
-view = lambda id: view_response(id, get_category_by_id(id=id))
+view_flow = lambda id: view_response(id, get_category_by_id(id=id))
+view = lambda id: maybe_bind_id(id, view_flow)
 
 # Create
 create_response = lambda body: (
         contains_name_response(body) or
-        category_name_exists_response(body["name"]) or
+        name_exists_response(body["name"]) or
         (
             {
                 "message": "Category created successfully.",
@@ -54,8 +57,8 @@ create = lambda: create_response(request.get_json())
 # Update
 update_response = lambda id, body, category: (
         contains_name_response(body) or
-        category_id_not_exists_response(id) or
-        category_name_exists_response(body["name"], id) or
+        id_not_exists_response(id) or
+        name_exists_response(body["name"], id) or
         category.set_name(body["name"]) or
         (
             {
@@ -64,17 +67,18 @@ update_response = lambda id, body, category: (
             }, 200
         )
 )
-update = lambda id: update_response(id, request.get_json(), get_category_by_id(id=id))
+update_flow = lambda id: update_response(id, request.get_json(), get_category_by_id(id=id))
+update = lambda id: maybe_bind_id(id, update_flow)
 
 # Destroy
-destroy_response = lambda id, category: (
-        category_id_not_exists_response(id) or
-        (delete_category(category=category), ({}, 204))[1]
+destroy_response = lambda id: (
+        id_not_exists_response(id) or
+        (delete_category(category=get_category_by_id(id=id)), ({}, 204))[1]
 )
-destroy = lambda id: destroy_response(id, get_category_by_id(id=id))
+destroy = lambda id: maybe_bind_id(id, destroy_response)
 
 category_blueprint.add_url_rule(rule="/", endpoint="index", view_func=index, methods=["GET"])
 category_blueprint.add_url_rule(rule="/<int:id>", endpoint="view", view_func=view, methods=["GET"])
 category_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
-category_blueprint.add_url_rule(rule="/<id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
-category_blueprint.add_url_rule(rule="/<id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])
+category_blueprint.add_url_rule(rule="/<int:id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
+category_blueprint.add_url_rule(rule="/<int:id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])

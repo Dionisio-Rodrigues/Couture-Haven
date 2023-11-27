@@ -1,4 +1,5 @@
 from flask import request
+
 from src.models.product import Product
 from src.services.product import (
     get_all_products,
@@ -7,6 +8,7 @@ from src.services.product import (
     delete_product,
 )
 from src.routes import product_blueprint
+from src.utilities.flask import maybe_bind_id
 
 # Validations
 contains_name_response = lambda body: (
@@ -35,7 +37,8 @@ view_response = lambda id, product: (
     if product
     else ({"message": f"Product with ID '{id}' not found."}, 404)
 )
-view = lambda id: view_response(id, get_products_by_id(id=id))
+view_flow = lambda id: view_response(id, get_products_by_id(id=id))
+view = lambda id: maybe_bind_id(id, view_flow)
 
 # Create
 create_response = lambda body: (
@@ -63,17 +66,18 @@ update_response = lambda id, body, product: (
         product.set_category_id(body.get("category_id") or product.category_id) or
         ({"message": "Product updated successfully.", "product": save_product(product).to_dict()}, 200)
 )
-update = lambda id: update_response(id, request.get_json(), get_products_by_id(id=id))
+update_flow = lambda id: update_response(id, request.get_json(), get_products_by_id(id=id))
+update = lambda id: maybe_bind_id(id, update_flow)
 
 # Destroy
-destroy_response = lambda id, product: (
+destroy_response = lambda id: (
         product_id_not_exists_response(id) or
-        (delete_product(product=product), ({}, 204))[1]
+        (delete_product(product=get_products_by_id(id=id)), ({}, 204))[1]
 )
-destroy = lambda id: destroy_response(id, get_products_by_id(id=id))
+destroy = lambda id: maybe_bind_id(id, destroy_response)
 
 product_blueprint.add_url_rule(rule="/", endpoint="index", view_func=index, methods=["GET"])
-product_blueprint.add_url_rule(rule="/<id>", endpoint="view", view_func=view, methods=["GET"])
+product_blueprint.add_url_rule(rule="/<int:id>", endpoint="view", view_func=view, methods=["GET"])
 product_blueprint.add_url_rule(rule="/", endpoint="create", view_func=create, methods=["POST"])
-product_blueprint.add_url_rule(rule="/<id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
-product_blueprint.add_url_rule(rule="/<id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])
+product_blueprint.add_url_rule(rule="/<int:id>", endpoint="update", view_func=update, methods=["PUT", "PATCH"])
+product_blueprint.add_url_rule(rule="/<int:id>", endpoint="destroy", view_func=destroy, methods=["DELETE"])
