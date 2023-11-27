@@ -1,1 +1,6 @@
-format_conditions = lambda dictionary: [f"{key}: {value}" for key, value in dictionary.items()]
+format_conditions = lambda conditions: "[{}]".format(", ".join(
+    [
+        "{}: {}".format(key, f"({format_conditions(value)})" if isinstance(value, dict) else value)
+        for key, value in conditions.items()
+    ]
+))
